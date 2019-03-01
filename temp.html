@@ -146,7 +146,7 @@
         
         const yScale = d3.scaleLinear()
         .range([height, 0])
-        .domain([0, 100]);
+        .domain([0, 10]);
 
         // vertical grid lines
         // const makeXLines = () => d3.axisBottom()
@@ -257,14 +257,14 @@
         .attr('y', margin / 2.4)
         .attr('transform', 'rotate(-90)')
         .attr('text-anchor', 'middle')
-        .text('Love meter (%)')
+        .text('Sugar (g)')
 
         svg.append('text')
         .attr('class', 'label')
         .attr('x', width / 2 + margin)
         .attr('y', height + margin * 1.7)
         .attr('text-anchor', 'middle')
-        .text('brands')
+        .text('Manufacturer')
 
         svg.append('text')
         .attr('class', 'title')
@@ -279,6 +279,7 @@
         .attr('y', height + margin * 1.7)
         .attr('text-anchor', 'start')
         .text('Source: Stack Overflow, 2018')
+        .text('Most loved programming brands in 2018')
     </script>
     </body>
 </html>
