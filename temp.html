@@ -221,7 +221,7 @@
                 
                 let text = ''
                 if (divergence > 0) text += '+'
-                text += `${divergence}%`
+                text += `${divergence}`
 
                 return idx !== i ? text : '';
             })
@@ -248,7 +248,7 @@
         .attr('x', (a) => xScale(a.brand) + xScale.bandwidth() / 2)
         .attr('y', (a) => yScale(a.value) + 30)
         .attr('text-anchor', 'middle')
-        .text((a) => `${a.value}%`)
+        .text((a) => `${a.value}`)
         
         svg
         .append('text')
