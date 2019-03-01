@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+</style>
+
+<body>
+    <script src="http://d3js.org/d3.v4.min.js"></script>
+    <script>
+        const height = 900;
+        const width = 1200;
+        var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+
+        var ts_data, x_scale, y_scale;
+
+        // Make the tooltip
+        
+
+        d3.csv("Breakfast_Cereals.csv",
+            //processing the data
+            function (row) {
+                return {
+                    year: new Date(row["Year "], 0, 1),
+                    nominal_gdp: Number(row["Nominal GDP (trillions)"].slice(1, -1)),
+                    real_gdp: Number(row["Real GDP (trillions)"].slice(1, -1)),
+                    growth_rate: Number(row["GDP Growth Rate"].slice(0, -2)), // Call out Danny!
+                }
+            },
+            function (error, data) {
+                console.log(data);
+                ts_data = data;
+
+                // Create the x and y scales 
+                let x_scale = d3.scaleTime()
+                    .domain(d3.extent(data,(d)=>d.year))
+                    .range([100,width-100]);
+
+                let y_scale = d3.scaleLinear()
+                    .domain([
+                        d3.min(data, d => Math.min(Math.min(d.nominal_gdp,d.real_gdp), d.growth_rate)),
+                        d3.max(data, d => Math.max(Math.max(d.nominal_gdp,d.real_gdp), d.growth_rate))
+                    ])
+                    .range([height-100,100]); //needs to be an array!
+
+                // making the axes and axis labels
+                    svg.append("g") //group (wrapper) --> used for creating axes
+                        .call(d3.axisBottom(x_scale))
+                        .attr("transform",`translate(0, ${y_scale(0)})`); //carrots lets you do string formatting
+                    
+                    svg.append("g")
+                        .call(d3.axisLeft(y_scale))
+                        .attr("transform","translate(100,0)");
+                    
+                    svg.append("text").text("Year").attr("transform", `translate(${width/2},${height-50})`);
+                    
+                // drawing the lines
+                function drawLine(feature, color) {
+                    //using d3 to generate the line element
+                    var line = d3.line().x(function (d){
+                        return x_scale(d.year);
+                    }).y(function (d){
+                        return y_scale(d[feature]);
+                    });
+                    
+                    svg.append("path")
+                        .datum(ts_data)
+                        .attr("fill", "none")
+                        .attr("stroke", color)
+                        .attr("stroke-width", 5)
+                        .attr("d", line);
+
+                }
+
+                drawLine("nominal_gdp", "green"); //steelblue
+                drawLine("real_gdp", "red"); //maroon
+                drawLine("growth_rate", "magenta"); //gold
+
+                // making the legend
+                const feature_data = [{
+                    name: "Nominal GDP (trillions)",
+                    color: "green"
+                }, {
+                    name: "Real GDP (trillions)",
+                    color: "red"
+                }, {
+                    name: "Growth Rate (%)",
+                    color: "magenta"
+                }];
+                
+                // Create an empty selection for the legend that we will later populate
+                // This is another example of using the enter() function!
+                let legend = svg.selectAll(".legend").data(feature_data)
+                    .enter()
+                    .append("g")
+                    .attr("class", "legend");
+
+                // Draw the legend boxes
+                legend.append("rect")
+                    .attr("x", width/4)
+                    .attr("y", function (d,i) {
+                        return 150 + 25*i;
+                    })
+                    .attr("width", 15)
+                    .attr("height",15)
+                    .attr("fill", (d) => d.color);
+                    //.attr("fill", function(d){
+                    //    return d.color;
+                    //});
+
+                // Add the corresponding label
+                legend.append("text")
+                        .text((d)=> d.name)
+                        .attr("x", width /4 +25)
+                        .attr("y", function (d,i){
+                            return 165 + 25 * i;
+                        });
+
+
+                //making a tooltip
+                var tooltip_lookup = {}
+                data.forEach(function (d) {
+                    tooltip_lookup[d.year.getFullYear()] = d;
+                });
+
+                // Create the tooltip info
+                let tooltip_text = svg.append("rect")
+                    .attr("x", 100)
+                    .attr("y", 100)
+                    .attr("width", width - 200)
+                    .attr("height", height - 200)
+                    .attr("opacity", 0);
+
+                // Add event listeners to update the tooltip info as you move
+                
+
+
+            }
+        );
+    </script>
+</body>
