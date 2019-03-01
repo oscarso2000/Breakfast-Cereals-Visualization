@@ -96,27 +96,6 @@
         </div>
 
     <script>
-
-        d3.csv("Breakfast_Cereals.csv",
-        //processing the data
-
-        Brand Name	Manufacturer	Calories	Protein	Fat	Sodium	Fiber	Carbohydrates	Sugar	Potassium	Vitamins
-        function (row) {
-            return {
-                Brand_Name: String(row["Brand Name"]),
-                Manufacturer: Number(row["Nominal GDP (trillions)"].slice(1, -1)),
-                Calories: Number(row["Real GDP (trillions)"].slice(1, -1)),
-                Protein: Number(row["GDP Growth Rate"].slice(0, -2)),
-                Fat:
-                Sodium:
-                Fiber:
-                Carbohydrates:
-                Sugar:
-                Potassium:
-                Vitamins:
-            }
-        },
-
         const sample = [
         {
             brand: 'Post',
