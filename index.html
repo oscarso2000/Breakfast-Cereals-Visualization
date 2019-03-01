@@ -1,140 +1,239 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<style>
+<html>
+    <head>
+        <title>CDS D3 Onboarding</title>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+    </head>
+    
+    <style>
+        div#layout {
+        text-align: center;
+        }
 
-</style>
+        div#container {
+        width: 1000px;
+        height: 600px;
+        background-color: rgb(28, 129, 163);
+        }
 
-<body>
-    <script src="http://d3js.org/d3.v4.min.js"></script>
+        svg {
+        width: 100%;
+        height: 100%;
+        }
+
+        .bar {
+        fill: #d33636d5;
+        }
+
+        text {
+        font-size: 12px;
+        fill: #fff;
+        }
+
+        path {
+        stroke: rgb(201, 201, 201);
+        }
+
+        line {
+        stroke: rgb(201, 201, 201);
+        }
+
+        line#limit {
+        stroke: #FED966;
+        stroke-width: 3;
+        stroke-dasharray: 3 6;
+        }
+
+        .grid path {
+        stroke-width: 0;
+        }
+
+        .grid .tick line {
+        stroke: rgb(207, 207, 207);
+        stroke-opacity: 0.3;
+        }
+
+        text.divergence {
+        font-size: 14px;
+        fill: rgb(255, 179, 37);
+        }
+
+        text.value {
+        font-size: 14px;
+        }
+
+        text.title {
+        font-size: 22px;
+        font-weight: 600;
+        }
+
+        text.label {
+        font-size: 14px;
+        font-weight: 400;
+        }
+    </style>
+    
+    <body>
+        <div id='layout'>
+            <div id='container'>
+                <svg>
+                </svg>
+            </div>
+        </div>
+
     <script>
-        const height = 900;
-        const width = 1200;
-        var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
+        const cereal = [
+        {
+            brand: 'Post',
+            value: 8.2
+        },
+        {
+             brand: 'General Mills',
+            value: 7.6
+        },
+        {
+            brand: 'Kelloggs',
+            value: 6.9
+        },
+        {
+            brand: 'Quaker Oats',
+            value: 6.1
+        },
+        {
+            brand: 'Ralston Purina',
+            value: 5.9
+        },
+        {
+            brand: 'Nabisco',
+            value: 2.2
+        }
+        ];
 
-        var ts_data, x_scale, y_scale;
-
-        // Make the tooltip
+        const svg = d3.select('svg');
+        const svgContainer = d3.select('#container');
         
+        const margin = 80;
+        const width = 1000 - 2 * margin;
+        const height = 600 - 2 * margin;
 
-        d3.csv("Breakfast_Cereals.csv",
-            //processing the data
-            function (row) {
-                return {
-                    year: new Date(row["Year "], 0, 1),
-                    nominal_gdp: Number(row["Nominal GDP (trillions)"].slice(1, -1)),
-                    real_gdp: Number(row["Real GDP (trillions)"].slice(1, -1)),
-                    growth_rate: Number(row["GDP Growth Rate"].slice(0, -2)), // Call out Danny!
-                }
-            },
-            function (error, data) {
-                console.log(data);
-                ts_data = data;
+        const chart = svg.append('g')
+        .attr('transform', `translate(${margin}, ${margin})`);
 
-                // Create the x and y scales 
-                let x_scale = d3.scaleTime()
-                    .domain(d3.extent(data,(d)=>d.year))
-                    .range([100,width-100]);
+        const xScale = d3.scaleBand()
+        .range([0, width])
+        .domain(cereal.map((s) => s.brand))
+        .padding(0.4)
+        
+        const yScale = d3.scaleLinear()
+        .range([height, 0])
+        .domain([0, 10]);
 
-                let y_scale = d3.scaleLinear()
-                    .domain([
-                        d3.min(data, d => Math.min(Math.min(d.nominal_gdp,d.real_gdp), d.growth_rate)),
-                        d3.max(data, d => Math.max(Math.max(d.nominal_gdp,d.real_gdp), d.growth_rate))
-                    ])
-                    .range([height-100,100]); //needs to be an array!
+        const makeYLines = () => d3.axisLeft()
+        .scale(yScale)
 
-                // making the axes and axis labels
-                    svg.append("g") //group (wrapper) --> used for creating axes
-                        .call(d3.axisBottom(x_scale))
-                        .attr("transform",`translate(0, ${y_scale(0)})`); //carrots lets you do string formatting
-                    
-                    svg.append("g")
-                        .call(d3.axisLeft(y_scale))
-                        .attr("transform","translate(100,0)");
-                    
-                    svg.append("text").text("Year").attr("transform", `translate(${width/2},${height-50})`);
-                    
-                // drawing the lines
-                function drawLine(feature, color) {
-                    //using d3 to generate the line element
-                    var line = d3.line().x(function (d){
-                        return x_scale(d.year);
-                    }).y(function (d){
-                        return y_scale(d[feature]);
-                    });
-                    
-                    svg.append("path")
-                        .datum(ts_data)
-                        .attr("fill", "none")
-                        .attr("stroke", color)
-                        .attr("stroke-width", 5)
-                        .attr("d", line);
+        chart.append('g')
+        .attr('transform', `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale));
 
-                }
+        chart.append('g')
+        .call(d3.axisLeft(yScale));
 
-                drawLine("nominal_gdp", "green"); //steelblue
-                drawLine("real_gdp", "red"); //maroon
-                drawLine("growth_rate", "magenta"); //gold
+        chart.append('g')
+        .attr('class', 'grid')
+        .call(makeYLines()
+            .tickSize(-width, 0, 0)
+            .tickFormat('')
+        )
 
-                // making the legend
-                const feature_data = [{
-                    name: "Nominal GDP (trillions)",
-                    color: "green"
-                }, {
-                    name: "Real GDP (trillions)",
-                    color: "red"
-                }, {
-                    name: "Growth Rate (%)",
-                    color: "magenta"
-                }];
+        const barGroups = chart.selectAll()
+        .data(cereal)
+        .enter()
+        .append('g')
+
+        barGroups
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('x', (g) => xScale(g.brand))
+        .attr('y', (g) => yScale(g.value))
+        .attr('height', (g) => height - yScale(g.value))
+        .attr('width', xScale.bandwidth())
+        .on('mouseenter', function (actual, i) {
+            d3.selectAll('.value')
+            .attr('opacity', 0)
+
+            d3.select(this)
+            .transition()
+            .duration(300)
+            .attr('opacity', 0.6)
+
+            const y = yScale(actual.value)
+
+            line = chart.append('line')
+            .attr('id', 'limit')
+            .attr('x1', 0)
+            .attr('y1', y)
+            .attr('x2', width)
+            .attr('y2', y)
+
+            barGroups.append('text')
+            .attr('class', 'divergence')
+            .attr('x', (a) => xScale(a.brand) + xScale.bandwidth() / 2)
+            .attr('y', (a) => yScale(a.value) + 30)
+            .attr('fill', 'white')
+            .attr('text-anchor', 'middle')
+            .text((a, idx) => {
+                const divergence = (a.value - actual.value).toFixed(1)
                 
-                // Create an empty selection for the legend that we will later populate
-                // This is another example of using the enter() function!
-                let legend = svg.selectAll(".legend").data(feature_data)
-                    .enter()
-                    .append("g")
-                    .attr("class", "legend");
+                let text = ''
+                if (divergence > 0) text += '+'
+                text += `${divergence}`
 
-                // Draw the legend boxes
-                legend.append("rect")
-                    .attr("x", width/4)
-                    .attr("y", function (d,i) {
-                        return 150 + 25*i;
-                    })
-                    .attr("width", 15)
-                    .attr("height",15)
-                    .attr("fill", (d) => d.color);
-                    //.attr("fill", function(d){
-                    //    return d.color;
-                    //});
+                return idx !== i ? text : '';
+            })
 
-                // Add the corresponding label
-                legend.append("text")
-                        .text((d)=> d.name)
-                        .attr("x", width /4 +25)
-                        .attr("y", function (d,i){
-                            return 165 + 25 * i;
-                        });
+        })
+        .on('mouseleave', function () {
+            d3.selectAll('.value')
+            .attr('opacity', 1)
 
+            d3.select(this)
+            .transition()
+            .duration(300)
+            .attr('opacity', 1)
+            .attr('x', (a) => xScale(a.brand))
+            .attr('width', xScale.bandwidth())
 
-                //making a tooltip
-                var tooltip_lookup = {}
-                data.forEach(function (d) {
-                    tooltip_lookup[d.year.getFullYear()] = d;
-                });
+            chart.selectAll('#limit').remove()
+            chart.selectAll('.divergence').remove()
+        })
 
-                // Create the tooltip info
-                let tooltip_text = svg.append("rect")
-                    .attr("x", 100)
-                    .attr("y", 100)
-                    .attr("width", width - 200)
-                    .attr("height", height - 200)
-                    .attr("opacity", 0);
+        barGroups.append('text')
+        .attr('class', 'value')
+        .attr('x', (a) => xScale(a.brand) + xScale.bandwidth() / 2)
+        .attr('y', (a) => yScale(a.value) + 30)
+        .attr('text-anchor', 'middle')
+        .text((a) => `${a.value}`)
+        
+        svg.append('text')
+        .attr('class', 'label')
+        .attr('x', -(height / 2) - margin)
+        .attr('y', margin / 2.4)
+        .attr('transform', 'rotate(-90)')
+        .attr('text-anchor', 'middle')
+        .text('Sugar (g)')
 
-                // Add event listeners to update the tooltip info as you move
-                
+        svg.append('text')
+        .attr('class', 'label')
+        .attr('x', width / 2 + margin)
+        .attr('y', height + margin * 1.7)
+        .attr('text-anchor', 'middle')
+        .text('Manufacturer')
 
-
-            }
-        );
+        svg.append('text')
+        .attr('class', 'title')
+        .attr('x', width / 2 + margin)
+        .attr('y', 40)
+        .attr('text-anchor', 'middle')
+        .text('Amount of Sugar per Cereal Manufacturer')
     </script>
-</body>
+    </body>
+</html>
